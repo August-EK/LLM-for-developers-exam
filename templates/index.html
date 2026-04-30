@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Declaration of Independence — Assistant</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Georgia, 'Times New Roman', serif;
+      background: #f9f6f0;
+      color: #1a1a1a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 60px 20px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      letter-spacing: 0.02em;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      font-size: 0.95rem;
+      color: #666;
+      font-style: italic;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #e0d8cc;
+      border-radius: 8px;
+      padding: 32px;
+      width: 100%;
+      max-width: 760px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: bold;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #555;
+      margin-bottom: 8px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 90px;
+      font-family: Georgia, serif;
+      font-size: 1rem;
+      padding: 12px;
+      border: 1px solid #d0c8ba;
+      border-radius: 6px;
+      background: #fdfbf8;
+      resize: vertical;
+      color: #1a1a1a;
+      transition: border-color 0.2s;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: #8b6f47;
+    }
+
+    button {
+      margin-top: 14px;
+      padding: 11px 28px;
+      font-family: Georgia, serif;
+      font-size: 1rem;
+      background: #3b2e1e;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover { background: #5a4530; }
+    button:disabled { background: #aaa; cursor: not-allowed; }
+
+    /* Loader */
+    .loader {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      margin-top: 28px;
+      color: #888;
+      font-style: italic;
+      font-size: 0.95rem;
+    }
+
+    .loader.visible { display: flex; }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #ccc;
+      border-top-color: #3b2e1e;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Answer */
+    #answer-box {
+      display: none;
+      margin-top: 28px;
+    }
+
+    #answer-box.visible { display: block; }
+
+    #answer-box h2 {
+      font-size: 0.85rem;
+      font-weight: bold;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #555;
+      margin-bottom: 10px;
+    }
+
+    #answer {
+      background: #f4f0e8;
+      border-left: 4px solid #3b2e1e;
+      padding: 18px 20px;
+      border-radius: 0 6px 6px 0;
+      font-size: 1rem;
+      line-height: 1.7;
+      white-space: pre-wrap;
+    }
+
+    /* Context */
+    details {
+      margin-top: 20px;
+    }
+
+    summary {
+      font-size: 0.82rem;
+      color: #888;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+      user-select: none;
+    }
+
+    summary:hover { color: #555; }
+
+    #context {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      color: #777;
+      font-family: 'Courier New', monospace;
+      background: #f4f4f0;
+      padding: 14px;
+      border-radius: 6px;
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
+
+    footer {
+      margin-top: 40px;
+      font-size: 0.8rem;
+      color: #aaa;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Declaration of Independence</h1>
+    <p>Ask a question about the US Declaration of Independence (1776)</p>
+  </header>
+
+  <div class="card">
+    <label for="question">Your question</label>
+    <textarea id="question" placeholder="What does the document say about equality?"></textarea>
+    <button id="ask-btn" onclick="ask()">Ask</button>
+
+    <div class="loader" id="loader">
+      <div class="spinner"></div>
+      <span id="loader-text">Retrieving context and generating answer…</span>
+    </div>
+
+    <div id="answer-box">
+      <h2>Answer</h2>
+      <div id="answer"></div>
+      <details>
+        <summary>Show retrieved context</summary>
+        <div id="context"></div>
+      </details>
+    </div>
+  </div>
+
+  <footer>Powered by tinyllama &middot; ChromaDB &middot; Flask</footer>
+
+  <script>
+    async function ask() {
+      const q = document.getElementById("question").value.trim();
+      if (!q) return;
+
+      const btn = document.getElementById("ask-btn");
+      const loader = document.getElementById("loader");
+      const answerBox = document.getElementById("answer-box");
+
+      btn.disabled = true;
+      loader.classList.add("visible");
+      answerBox.classList.remove("visible");
+
+      // Update loader text after 60s to manage expectations
+      const slowTimer = setTimeout(() => {
+        document.getElementById("loader-text").textContent =
+          "Still working — model is running on CPU, this may take a moment…";
+      }, 60000);
+
+      try {
+        const res = await fetch("/ask", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({question: q})
+        });
+        const data = await res.json();
+        document.getElementById("answer").textContent = data.answer;
+        document.getElementById("context").textContent = data.context;
+        answerBox.classList.add("visible");
+      } catch (err) {
+        document.getElementById("answer").textContent = "Error: could not reach the server.";
+        answerBox.classList.add("visible");
+      } finally {
+        clearTimeout(slowTimer);
+        loader.classList.remove("visible");
+        btn.disabled = false;
+        document.getElementById("loader-text").textContent =
+          "Retrieving context and generating answer…";
+      }
+    }
+
+    document.getElementById("question").addEventListener("keydown", function(e) {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        ask();
+      }
+    });
+  </script>
+
+</body>
+</html>

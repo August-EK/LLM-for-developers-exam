@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Declaration of Independence — Assistant</title>
-  <style>
+<meta charset="UTF-8">
+<title>Declaration of Independence — Assistant</title>
+<style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
+ 
     body {
       font-family: Georgia, 'Times New Roman', serif;
       background: #f9f6f0;
@@ -16,24 +16,24 @@
       align-items: center;
       padding: 60px 20px;
     }
-
+ 
     header {
       text-align: center;
       margin-bottom: 40px;
     }
-
+ 
     header h1 {
       font-size: 2rem;
       letter-spacing: 0.02em;
       margin-bottom: 8px;
     }
-
+ 
     header p {
       font-size: 0.95rem;
       color: #666;
       font-style: italic;
     }
-
+ 
     .card {
       background: #fff;
       border: 1px solid #e0d8cc;
@@ -43,7 +43,7 @@
       max-width: 760px;
       box-shadow: 0 2px 12px rgba(0,0,0,0.06);
     }
-
+ 
     label {
       display: block;
       font-size: 0.85rem;
@@ -53,7 +53,37 @@
       color: #555;
       margin-bottom: 8px;
     }
-
+ 
+    /* Prompt style selector */
+    .prompt-style {
+      margin-bottom: 22px;
+    }
+ 
+    .prompt-style select {
+      width: 100%;
+      font-family: Georgia, serif;
+      font-size: 1rem;
+      padding: 10px 12px;
+      border: 1px solid #d0c8ba;
+      border-radius: 6px;
+      background: #fdfbf8;
+      color: #1a1a1a;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+ 
+    .prompt-style select:focus {
+      outline: none;
+      border-color: #8b6f47;
+    }
+ 
+    .prompt-hint {
+      margin-top: 6px;
+      font-size: 0.8rem;
+      color: #888;
+      font-style: italic;
+    }
+ 
     textarea {
       width: 100%;
       height: 90px;
@@ -67,12 +97,12 @@
       color: #1a1a1a;
       transition: border-color 0.2s;
     }
-
+ 
     textarea:focus {
       outline: none;
       border-color: #8b6f47;
     }
-
+ 
     button {
       margin-top: 14px;
       padding: 11px 28px;
@@ -85,10 +115,10 @@
       cursor: pointer;
       transition: background 0.2s;
     }
-
+ 
     button:hover { background: #5a4530; }
     button:disabled { background: #aaa; cursor: not-allowed; }
-
+ 
     /* Loader */
     .loader {
       display: none;
@@ -99,9 +129,9 @@
       font-style: italic;
       font-size: 0.95rem;
     }
-
+ 
     .loader.visible { display: flex; }
-
+ 
     .spinner {
       width: 18px;
       height: 18px;
@@ -111,17 +141,17 @@
       animation: spin 0.8s linear infinite;
       flex-shrink: 0;
     }
-
+ 
     @keyframes spin { to { transform: rotate(360deg); } }
-
+ 
     /* Answer */
     #answer-box {
       display: none;
       margin-top: 28px;
     }
-
+ 
     #answer-box.visible { display: block; }
-
+ 
     #answer-box h2 {
       font-size: 0.85rem;
       font-weight: bold;
@@ -130,7 +160,25 @@
       color: #555;
       margin-bottom: 10px;
     }
-
+ 
+    .style-badge {
+      display: inline-block;
+      margin-left: 10px;
+      padding: 2px 10px;
+      font-size: 0.7rem;
+      font-weight: normal;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      background: #3b2e1e;
+      color: #fff;
+      border-radius: 12px;
+      vertical-align: middle;
+    }
+ 
+    .style-badge.kid {
+      background: #c4732e;
+    }
+ 
     #answer {
       background: #f4f0e8;
       border-left: 4px solid #3b2e1e;
@@ -140,12 +188,28 @@
       line-height: 1.7;
       white-space: pre-wrap;
     }
-
+ 
+    /* Sources */
+    #sources {
+      margin-top: 12px;
+      font-size: 0.85rem;
+      color: #777;
+      font-style: italic;
+    }
+ 
+    /* Timer */
+    #timer {
+      margin-top: 6px;
+      font-size: 0.8rem;
+      color: #999;
+      font-family: 'Courier New', monospace;
+    }
+ 
     /* Context */
     details {
       margin-top: 20px;
     }
-
+ 
     summary {
       font-size: 0.82rem;
       color: #888;
@@ -153,9 +217,9 @@
       letter-spacing: 0.04em;
       user-select: none;
     }
-
+ 
     summary:hover { color: #555; }
-
+ 
     #context {
       margin-top: 10px;
       font-size: 0.82rem;
@@ -167,75 +231,135 @@
       white-space: pre-wrap;
       line-height: 1.5;
     }
-
+ 
     footer {
       margin-top: 40px;
       font-size: 0.8rem;
       color: #aaa;
       text-align: center;
     }
-  </style>
+</style>
 </head>
 <body>
-
+ 
   <header>
-    <h1>Declaration of Independence</h1>
-    <p>Ask a question about the US Declaration of Independence (1776)</p>
-  </header>
-
+<h1>Declaration of Independence</h1>
+<p>Ask a question about the US Declaration of Independence (1776)</p>
+</header>
+ 
   <div class="card">
+ 
+    <div class="prompt-style">
+<label for="prompt-style-select">Answer style</label>
+<select id="prompt-style-select">
+<option value="southern">Southern gentleman mode — folksy drawl, warm, source-cited</option>
+<option value="kid">Kid-friendly mode — fun, simple, for 12-year-olds</option>
+</select>
+<div class="prompt-hint" id="prompt-hint">
+        Strict, fact-checking assistant — quotes the source and refuses to speculate.
+</div>
+</div>
+ 
     <label for="question">Your question</label>
-    <textarea id="question" placeholder="What does the document say about equality?"></textarea>
-    <button id="ask-btn" onclick="ask()">Ask</button>
-
+<textarea id="question" placeholder="What does the document say about equality?"></textarea>
+<button id="ask-btn" onclick="ask()">Ask</button>
+ 
     <div class="loader" id="loader">
-      <div class="spinner"></div>
-      <span id="loader-text">Retrieving context and generating answer…</span>
-    </div>
-
+<div class="spinner"></div>
+<span id="loader-text">Retrieving context and generating answer…</span>
+</div>
+ 
     <div id="answer-box">
-      <h2>Answer</h2>
-      <div id="answer"></div>
-      <details>
-        <summary>Show retrieved context</summary>
-        <div id="context"></div>
-      </details>
-    </div>
-  </div>
-
-  <footer>Powered by tinyllama &middot; ChromaDB &middot; Flask</footer>
-
+<h2>Answer<span id="style-badge" class="style-badge"></span></h2>
+<div id="answer"></div>
+<div id="sources"></div>
+<div id="timer"></div>
+<details>
+<summary>Show retrieved context</summary>
+<div id="context"></div>
+</details>
+</div>
+</div>
+ 
+  <footer>Powered by Qwen 2.5 &middot; ChromaDB &middot; Flask</footer>
+ 
   <script>
+    // Hint-tekst pr. prompt-stil
+    const PROMPT_HINTS = {
+      researcher: "Strict, fact-checking assistant — quotes the source and refuses to speculate.",
+      kid: "Friendly history buddy — explains the document in simple words for a 12-year-old."
+    };
+ 
+    const STYLE_LABELS = {
+      researcher: "Researcher",
+      kid: "Kid-friendly"
+    };
+ 
+    // Opdater hint-teksten når brugeren skifter stil
+    document.getElementById("prompt-style-select").addEventListener("change", function(e) {
+      document.getElementById("prompt-hint").textContent = PROMPT_HINTS[e.target.value];
+    });
+ 
     async function ask() {
       const q = document.getElementById("question").value.trim();
       if (!q) return;
-
+ 
+      const promptStyle = document.getElementById("prompt-style-select").value;
       const btn = document.getElementById("ask-btn");
       const loader = document.getElementById("loader");
       const answerBox = document.getElementById("answer-box");
-
+ 
       btn.disabled = true;
       loader.classList.add("visible");
       answerBox.classList.remove("visible");
-
+ 
       // Update loader text after 60s to manage expectations
       const slowTimer = setTimeout(() => {
         document.getElementById("loader-text").textContent =
           "Still working — model is running on CPU, this may take a moment…";
       }, 60000);
-
+ 
       try {
         const res = await fetch("/ask", {
           method: "POST",
           headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({question: q})
+          body: JSON.stringify({question: q, prompt_style: promptStyle})
         });
         const data = await res.json();
+ 
         document.getElementById("answer").textContent = data.answer;
+ 
+        // Vis hvilken stil der blev brugt (badge ved siden af "Answer")
+        const badge = document.getElementById("style-badge");
+        const usedStyle = data.prompt_style || promptStyle;
+        badge.textContent = STYLE_LABELS[usedStyle] || usedStyle;
+        badge.className = "style-badge " + (usedStyle === "kid" ? "kid" : "");
+ 
+        // Vis kilder hvis de findes
+        const sourcesEl = document.getElementById("sources");
+        if (data.sources && data.sources.length) {
+          const label = data.sources.length === 1 ? "Source: page " : "Sources: pages ";
+          sourcesEl.textContent = label + data.sources.join(", ");
+        } else {
+          sourcesEl.textContent = "";
+        }
+ 
+        // Vis timing-info fra serveren
+        const timerEl = document.getElementById("timer");
+        if (data.timing) {
+          timerEl.textContent =
+            `Retrieval: ${data.timing.retrieval}s · Generation: ${data.timing.generation}s · Total: ${data.timing.total}s`;
+        } else {
+          timerEl.textContent = "";
+        }
+ 
         document.getElementById("context").textContent = data.context;
         answerBox.classList.add("visible");
       } catch (err) {
         document.getElementById("answer").textContent = "Error: could not reach the server.";
+        document.getElementById("sources").textContent = "";
+        document.getElementById("timer").textContent = "";
+        document.getElementById("style-badge").textContent = "";
         answerBox.classList.add("visible");
       } finally {
         clearTimeout(slowTimer);
@@ -245,14 +369,14 @@
           "Retrieving context and generating answer…";
       }
     }
-
+ 
     document.getElementById("question").addEventListener("keydown", function(e) {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         ask();
       }
     });
-  </script>
-
+</script>
+ 
 </body>
 </html>

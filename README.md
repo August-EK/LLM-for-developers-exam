@@ -1,161 +1,297 @@
-# US Declaration of Independence — RAG Document Assistant
-
-A Flask web application that lets you ask questions about the US Declaration of Independence (1776). The system uses Retrieval-Augmented Generation (RAG) to fetch relevant passages from the document before generating an answer with a local LLM via Ollama.
-
+# RAG Document Assistant
+ 
+A local Retrieval-Augmented Generation (RAG) prototype. The application answers questions about the **US Declaration of Independence (1776)** using a local stack: a local LLM (via Ollama), local embeddings, and a local vector database.
+ 
+The system also demonstrates **prompt engineering with the 4T's framework** (Traits, Task, Tone, Target) by exposing two distinct system prompts the user can switch between in the UI.
+ 
 ---
-
-## Architecture Overview
-
-```
-User question
-     │
-     ▼
-Sentence Transformer (all-MiniLM-L6-v2)
-     │ encodes question into vector
-     ▼
-ChromaDB (vector search)
-     │ returns top-3 relevant passages from document.pdf
-     ▼
-Ollama (tinyllama)
-     │ generates answer based on retrieved context
-     ▼
-Flask → HTML response to user
-```
-
-### Components
-
-| Component | Role |
-|---|---|
-| `ingest.py` | Reads `document.pdf`, splits by page, embeds with sentence-transformers, stores in ChromaDB |
-| `app.py` | Flask server — handles `/` (UI) and `/ask` (RAG + LLM pipeline) |
-| `templates/index.html` | Single-page frontend with question input and answer display |
-| `chroma_db/` | Persistent vector store — generated once by `ingest.py`, reused on every query |
-| Ollama (tinyllama) | Local LLM — runs entirely on your machine, no internet required for inference |
-| `all-MiniLM-L6-v2` | Hugging Face embedding model — converts text to vectors for semantic search |
-
+ 
+## Features
+ 
+- Fully local RAG pipeline
+- Local LLM via Ollama (Qwen 2.5 3B)
+- Local embeddings via `sentence-transformers` (`all-MiniLM-L6-v2`)
+- Persistent vector store via ChromaDB
+- Two switchable system prompts demonstrating the 4T's framework
+- Source citations (page numbers) shown with every answer
+- Retrieval and generation timing displayed for each query
+ 
 ---
-
-## RAG Implementation
-
-1. **Ingestion** (`ingest.py`): The PDF is read page by page. Each page is encoded into a vector using `all-MiniLM-L6-v2` and stored in ChromaDB with a persistent client.
-2. **Retrieval** (`app.py`): When a question arrives, it is encoded with the same model. ChromaDB performs a cosine similarity search and returns the 3 most relevant pages.
-3. **Generation** (`app.py`): The retrieved passages are injected into the prompt as context. The local LLM generates an answer strictly based on that context.
-
----
-
-## 4T's Prompt Engineering
-
-The system prompt in `app.py` is structured using the 4T's framework:
-
-| T | Value | Prompt line |
-|---|---|---|
-| **Traits** | Knowledgeable and neutral historian | `You are a knowledgeable and neutral historian (Traits)` |
-| **Task** | Answer questions based only on retrieved excerpts | `Your task is to answer questions strictly based on the provided excerpts (Task)` |
-| **Tone** | Clear, academic, informative | `Use a clear, academic and informative tone (Tone)` |
-| **Target** | Curious students and researchers | `Your answers are aimed at curious students and researchers (Target)` |
-
-The 4T's are visible directly in the system prompt in `app.py` and constrain the LLM to act as a document-grounded historian rather than a general-purpose assistant.
-
----
-
-## MVP Definition
-
-The MVP is a single-page web application that:
-- accepts a natural language question about the Declaration of Independence
-- retrieves the 3 most relevant passages from the document using RAG
-- generates a grounded answer using a local LLM
-- displays both the answer and the retrieved source context
-
-What is **not** included in the MVP:
-- support for multiple documents
-- user authentication
-- persistent conversation history
-- production deployment or scalability
-
----
-
+ 
 ## Prerequisites
-
-- Python 3.10 or newer
-- [Ollama](https://ollama.com) installed and running
-- `tinyllama` model pulled in Ollama:
-  ```powershell
-  ollama pull tinyllama
-  ```
-- The file `document.pdf` placed in the project root (US Declaration of Independence)
-
+ 
+You need the following installed before setup:
+ 
+1. **Python 3.10 or newer** — verify with `python --version`
+2. **Ollama** — download from [https://ollama.com/download](https://ollama.com/download)
+3. **Git** — to clone the repository
+ 
+After installing Ollama, make sure the Ollama service is running. On Windows it starts automatically; on Mac/Linux you may need to run `ollama serve` in a terminal.
+ 
 ---
-
+ 
 ## Installation
-
-```powershell
-# 1. Clone or download the project
+ 
+### 1. Clone the repository
+ 
+```bash
+git clone https://github.com/August-EK/LLM-for-developers-exam.git
 cd rag-doc-assistant
-
-# 2. Create and activate virtual environment
+```
+ 
+### 2. Create and activate a virtual environment
+ 
+**Windows (PowerShell):**
+ 
+```powershell
 python -m venv venv
-.\venv\Scripts\activate
-
-# 3. Install dependencies
+.\venv\Scripts\Activate
+```
+ 
+If PowerShell blocks the activation script, run this once and try again:
+ 
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+ 
+**Mac / Linux:**
+ 
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+ 
+You should now see `(venv)` at the start of your terminal prompt.
+ 
+### 3. Install Python dependencies
+ 
+```bash
 pip install -r requirements.txt
 ```
-
+ 
+This installs Flask, Ollama client, ChromaDB, pypdf, and sentence-transformers.
+ 
+### 4. Pull the local LLM
+ 
+```bash
+ollama pull qwen2.5:3b
+```
+ 
+This downloads roughly 1.9 GB. Verify it was installed correctly:
+ 
+```bash
+ollama list
+```
+ 
+You should see `qwen2.5:3b` in the output.
+ 
 ---
-
+ 
 ## Configuration
-
-No configuration file is required. The model name and ChromaDB path are set directly in `app.py`:
-
-| Setting | Value | Location |
-|---|---|---|
-| LLM model | `tinyllama` | `app.py` line 31 |
-| ChromaDB path | `./chroma_db` | `app.py` line 7 |
-| Embedding model | `all-MiniLM-L6-v2` | `app.py` line 9 |
-| Retrieved chunks | 3 | `app.py` line 27 |
-| Max tokens | 200 | `app.py` line 36 |
-
+ 
+All configurable values are kept at the top of `app.py` and `ingest.py` for easy adjustment:
+ 
+| Setting | Location | Default | Description |
+|---|---|---|---|
+| `LLM_MODEL` | `app.py` | `qwen2.5:3b` | The Ollama model used for generation |
+| `EMBEDDING_MODEL` | `app.py`, `ingest.py` | `all-MiniLM-L6-v2` | Sentence-transformer model for embeddings |
+| `CHUNK_SIZE` | `ingest.py` | `500` | Character size of each text chunk |
+| `CHUNK_OVERLAP` | `ingest.py` | `100` | Character overlap between adjacent chunks |
+| `TOP_K` | `app.py` | `3` | Number of chunks retrieved per query |
+| `MAX_OUTPUT_TOKENS` | `app.py` | `500` | Maximum tokens generated by the LLM |
+| `DEFAULT_PROMPT_STYLE` | `app.py` | `southern` | Default system prompt style |
+ 
+If you change `EMBEDDING_MODEL`, `CHUNK_SIZE`, or `CHUNK_OVERLAP`, you must delete the existing `chroma_db/` folder and re-run ingestion (see below).
+ 
 ---
-
+ 
 ## Loading the RAG Source Material
-
-Run `ingest.py` once before starting the app. This reads `document.pdf`, generates embeddings, and stores them in `chroma_db/`:
-
+ 
+The application uses `document.pdf` in the project root as its knowledge source. A copy of the US Declaration of Independence is included.
+ 
+### To use the included document
+ 
+Run the ingestion script once:
+ 
+**Windows (PowerShell):**
+ 
 ```powershell
 python ingest.py
 ```
-
-Expected output:
+ 
+**Mac / Linux:**
+ 
+```bash
+python3 ingest.py
 ```
-Ingested 7 pages into ChromaDB.
+ 
+You should see something like:
+ 
 ```
-
-You only need to run this again if you change `document.pdf`.
-
+Ingested 30 chunks from 7 pages.
+```
+ 
+### To use a different document
+ 
+1. Replace `document.pdf` in the project root with your own PDF.
+2. Delete the existing vector store so old data is not mixed with new:
+ 
+   **Windows (PowerShell):**
+   ```powershell
+   Remove-Item -Recurse -Force chroma_db
+   ```
+ 
+   **Mac / Linux:**
+   ```bash
+   rm -rf chroma_db
+   ```
+ 
+3. Re-run ingestion: `python ingest.py`
+ 
+Note: the system prompts in `app.py` are tuned to the US Declaration of Independence. If you switch to a different document, edit `SYSTEM_PROMPTS` to match the new source material.
+ 
 ---
-
-## Starting the System
-
+ 
+## Starting the Application
+ 
+With the virtual environment active and ingestion completed, start the Flask server:
+ 
+**Windows (PowerShell):**
+ 
 ```powershell
 python app.py
 ```
-
-Open `http://localhost:5000` in your browser.
-
+ 
+**Mac / Linux:**
+ 
+```bash
+python3 app.py
+```
+ 
+You should see:
+ 
+```
+* Running on http://127.0.0.1:5000
+```
+ 
+Open that URL in your browser.
+ 
 ---
-
-## How to Use
-
-1. Type a question in the text field, e.g. *"What does the document say about equality?"*
-2. Click **Ask**
-3. Wait for the answer (first request takes ~2 minutes while the model loads into memory; subsequent requests take ~30 seconds)
-4. Click **Show retrieved context** to see which passages from the document were used
-
+ 
+## Using the Application
+ 
+1. **Choose an answer style** from the dropdown at the top:
+   - **Southern gentleman mode** — folksy, warm, but still cites the source
+   - **Kid-friendly mode** — simple words, short sentences, written for a 12-year-old
+2. **Type a question** about the Declaration of Independence in the text area.
+3. **Click "Ask"** (or press Enter).
+4. Wait for the answer. The first request may take longer because the model loads into memory.
+ 
+After the answer appears you will also see:
+ 
+- **Sources:** which page numbers the answer is based on
+- **Timing:** how long retrieval and generation took
+- **Show retrieved context:** an expandable section with the exact excerpts retrieved
+ 
+### Example questions
+ 
+- *What does the document say about equality?*
+- *Why did the colonies want to separate from Britain?*
+- *What rights are mentioned as unalienable?*
+- *Who is described as a tyrant?*
+ 
 ---
-
+ 
+## Testing the System
+ 
+To verify the system is working correctly, try these manual tests:
+ 
+1. **Same question, different styles**
+   Ask "What does the document say about equality?" once with Southern mode and once with Kid-friendly mode. The answers should sound clearly different — same facts, different language. This demonstrates the 4T's prompt engineering in action.
+ 
+2. **Out-of-scope question**
+   Ask something the document does not contain, e.g., "Who was George Washington?". The system should respond that the information is not in the excerpts, rather than answering from general knowledge. This demonstrates that the LLM is grounded in the retrieved context.
+ 
+3. **Source verification**
+   For any answer, expand "Show retrieved context" and verify that the answer is supported by the retrieved excerpts.
+ 
+---
+ 
+## Project Structure
+ 
+```
+rag-doc-assistant/
+├── app.py                  # Flask server, RAG pipeline, prompt definitions
+├── ingest.py               # PDF chunking and embedding into ChromaDB
+├── document.pdf            # Source document (Declaration of Independence)
+├── requirements.txt        # Python dependencies
+├── README.md               # This file
+├── chroma_db/              # Generated by ingest.py — persistent vector store
+└── templates/
+    └── index.html          # Single-page frontend
+```
+ 
+---
+ 
+## Troubleshooting
+ 
+### `ollama._types.ResponseError: model 'qwen2.5:3b' not found`
+ 
+The Ollama model has not been pulled. Run:
+ 
+```bash
+ollama pull qwen2.5:3b
+```
+ 
+### `TypeError: 'NoneType' object is not subscriptable` on `/ask`
+ 
+The vector store contains chunks without metadata, usually because it was created with an older version of `ingest.py`. Delete `chroma_db/` and re-run `python ingest.py`.
+ 
+### First request takes very long (60+ seconds)
+ 
+This is expected. The LLM is loaded into memory on the first request. Subsequent requests are faster. Total response time for an average question is around 60–90 seconds on a CPU.
+ 
+### PowerShell will not run `Activate.ps1`
+ 
+Run this once in PowerShell, then retry:
+ 
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+ 
+### Port 5000 already in use
+ 
+Stop any other Flask application running, or change the port in `app.py`:
+ 
+```python
+app.run(debug=True, port=5050)
+```
+ 
+---
+ 
 ## Known Limitations
-
-- **Speed**: Running on CPU only — first response takes ~2 minutes as the model loads into RAM. Subsequent responses are ~30 seconds.
-- **Chunk granularity**: The document is split by page, not by paragraph. A very long page may exceed the model's context window.
-- **Single document**: The system is designed for one document only. Adding more documents would require re-running `ingest.py` with modifications.
-- **tinyllama quality**: The model is small and fast but may produce shorter or less precise answers than larger models.
-- **No conversation history**: Each question is answered independently with no memory of previous questions.
+ 
+- **CPU inference is slow.** Generation time for Qwen 2.5 3B on a typical laptop CPU is 60–90 seconds per query. A GPU would reduce this significantly.
+- **Single document.** The current ingestion pipeline supports one PDF at a time. Adapting it to a directory of documents would require a small change in `ingest.py`.
+- **No conversation memory.** Each question is treated as standalone — the system has no memory of previous questions in the same session.
+- **No production hardening.** This is a prototype: no authentication, no rate limiting, debug mode is on, and Flask's built-in development server is used.
+ 
+---
+ 
+## Tech Stack
+ 
+| Component | Choice | Purpose |
+|---|---|---|
+| LLM runtime | Ollama | Hosts the local LLM |
+| LLM model | Qwen 2.5 3B | Answer generation |
+| Embedding model | `all-MiniLM-L6-v2` | Convert text to vectors |
+| Vector store | ChromaDB (persistent) | Semantic search over chunks |
+| Backend | Flask | HTTP server and RAG orchestration |
+| Frontend | HTML + vanilla JavaScript | Single-page user interface |
+| PDF parsing | pypdf | Extract text from the source PDF |
+ 
+---
+ 
+## License
+ 
+Educational project, PBA in Software Development. Source documents are public domain.

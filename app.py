@@ -11,7 +11,7 @@ EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 LLM_MODEL = "qwen2.5:3b"
 TOP_K = 3
 MAX_OUTPUT_TOKENS = 500
-DEFAULT_PROMPT_STYLE = "researcher"
+DEFAULT_PROMPT_STYLE = "southern"
  
 # === 4T's prompt engineering — to forskellige stilarter ===
 SYSTEM_PROMPTS = {

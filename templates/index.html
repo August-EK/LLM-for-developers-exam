@@ -179,6 +179,10 @@
       background: #c4732e;
     }
  
+    .style-badge.southern {
+      background: #6b4423;
+    }
+ 
     #answer {
       background: #f4f0e8;
       border-left: 4px solid #3b2e1e;
@@ -256,7 +260,7 @@
 <option value="kid">Kid-friendly mode — fun, simple, for 12-year-olds</option>
 </select>
 <div class="prompt-hint" id="prompt-hint">
-        Strict, fact-checking assistant — quotes the source and refuses to speculate.
+        Folksy Southern drawl — warm and hospitable, but still cites the source for every fact.
 </div>
 </div>
  
@@ -286,12 +290,12 @@
   <script>
     // Hint-tekst pr. prompt-stil
     const PROMPT_HINTS = {
-      researcher: "Strict, fact-checking assistant — quotes the source and refuses to speculate.",
+      southern: "Folksy Southern drawl — warm and hospitable, but still cites the source for every fact.",
       kid: "Friendly history buddy — explains the document in simple words for a 12-year-old."
     };
  
     const STYLE_LABELS = {
-      researcher: "Researcher",
+      southern: "Southern",
       kid: "Kid-friendly"
     };
  
@@ -333,7 +337,7 @@
         const badge = document.getElementById("style-badge");
         const usedStyle = data.prompt_style || promptStyle;
         badge.textContent = STYLE_LABELS[usedStyle] || usedStyle;
-        badge.className = "style-badge " + (usedStyle === "kid" ? "kid" : "");
+        badge.className = "style-badge " + usedStyle;
  
         // Vis kilder hvis de findes
         const sourcesEl = document.getElementById("sources");
